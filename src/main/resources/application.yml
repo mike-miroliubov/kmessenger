@@ -1,0 +1,6 @@
+micronaut:
+  application:
+    name: kmessenger
+logger:
+  levels:
+    com.kite.kmessanger: ERROR
