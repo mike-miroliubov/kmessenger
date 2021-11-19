@@ -1,20 +1,15 @@
 package com.kite.kmessenger.controller
 
+import com.kite.kmessenger.exception.UserNotFoundException
 import com.kite.kmessenger.model.ChatMessage
 import com.kite.kmessenger.service.ChatService
-import io.micronaut.core.async.publisher.Publishers
 import io.micronaut.websocket.WebSocketBroadcaster
 import io.micronaut.websocket.WebSocketSession
-import io.micronaut.websocket.annotation.OnClose
-import io.micronaut.websocket.annotation.OnMessage
-import io.micronaut.websocket.annotation.OnOpen
-import io.micronaut.websocket.annotation.ServerWebSocket
+import io.micronaut.websocket.annotation.*
 import jakarta.inject.Inject
-import org.reactivestreams.Publisher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import reactor.core.publisher.Flux
 
 @ServerWebSocket("/chat/{username}")
 class ChatServerWebSocket(
@@ -23,13 +18,10 @@ class ChatServerWebSocket(
     ) {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(ChatServerWebSocket::class.java)
-        private val privateMessageRegex = Regex("^@(\\S+) (.*)$")
     }
 
-    private val localSessions = ConcurrentHashMap<String, Set<WebSocketSession>>()
-
     @OnOpen
-    fun onOpen(username: String, session: WebSocketSession): Publisher<ChatMessage> {
+    fun onOpen(username: String, session: WebSocketSession): Flux<ChatMessage> {
         logger.info("[$username] joined!")
         val flux = chatService.register(username)
         return flux.flatMap { session.send(it) }
@@ -37,16 +29,25 @@ class ChatServerWebSocket(
 
     @OnMessage
     fun onMessage(username: String, message: ChatMessage, session: WebSocketSession) {
-        val msg = "[$username] $message"
-        logger.debug(msg)
-        chatService.sendMessage(message)
+        try {
+            chatService.sendMessage(message)
+        } catch (e: UserNotFoundException) {
+            logger.error("Message {} cannot be delivered", message, e)
+            session.sendAsync("Message cannot be delivered: ${e.message}")
+        }
     }
 
     @OnClose
-    fun onClose(username: String, session: WebSocketSession): Publisher<String> {
+    fun onClose(username: String, session: WebSocketSession) {
         val msg = "[$username] Disconnected!"
         logger.info(msg)
+        chatService.logout(username)
+    }
 
-        return Publishers.empty()
+    @OnError
+    fun handleUnexpectedError(username: String, session: WebSocketSession, throwable: Throwable) {
+        chatService.logout(username)
+        session.sendAsync("Fatal error occurred: ${throwable.message}")
+        throw throwable
     }
 }

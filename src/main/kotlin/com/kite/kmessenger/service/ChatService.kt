@@ -1,5 +1,6 @@
 package com.kite.kmessenger.service
 
+import com.kite.kmessenger.exception.UserNotFoundException
 import com.kite.kmessenger.model.ChatMessage
 import jakarta.inject.Singleton
 import org.slf4j.Logger
@@ -17,8 +18,9 @@ class ChatService {
     private val localSessions = ConcurrentHashMap<String, Sinks.Many<ChatMessage>>()
 
     fun sendMessage(message: ChatMessage) {
-        val flux = localSessions[message.to] ?: throw RuntimeException()
-        flux.tryEmitNext(message)
+        val flux = localSessions[message.to] ?: throw UserNotFoundException(message.to)
+        val r = flux.tryEmitNext(message)
+        logger.info("Sent {}: {}", message, r)
     }
 
     fun register(user: String): Flux<ChatMessage> {
@@ -28,6 +30,19 @@ class ChatService {
 
     fun logout(user: String) {
         val sink = localSessions[user]
-        logger.info("Remaining connections count {}", sink?.currentSubscriberCount())
+
+        if (sink != null) {
+            val subscriberCount = sink.currentSubscriberCount()
+            logger.debug("Session of $user closed, ${subscriberCount - 1} sessions remain")
+
+            if (subscriberCount <= 1) {
+                logger.debug("Last session for $user disconnected, no longer online")
+
+                val result = sink.tryEmitComplete()
+                logger.debug("Stream closed for $user: $result")
+
+                localSessions.remove(user)
+            }
+        }
     }
 }
