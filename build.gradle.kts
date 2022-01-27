@@ -34,14 +34,16 @@ dependencies {
 
 
     implementation("javax.annotation:javax.annotation-api")
-    implementation("org.apache.logging.log4j:log4j-core:2.14.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.17.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
-    runtimeOnly("org.apache.logging.log4j:log4j-api:2.14.1")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-api:2.17.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
     implementation("io.micronaut:micronaut-validation")
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
+    testImplementation("org.awaitility:awaitility-kotlin:4.1.1")
+
 
 }
 

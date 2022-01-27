@@ -30,7 +30,7 @@ class ChatService {
 
     fun logout(user: String) {
         val sink = localSessions[user]
-
+        
         if (sink != null) {
             val subscriberCount = sink.currentSubscriberCount()
             logger.debug("Session of $user closed, ${subscriberCount - 1} sessions remain")
