@@ -43,6 +43,8 @@ dependencies {
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
     testImplementation("org.awaitility:awaitility-kotlin:4.1.1")
+    testImplementation(group = "org.apache.logging.log4j", name = "log4j-core", version = "2.17.0", classifier = "tests")
+    testImplementation("org.assertj:assertj-core:3.22.0")
 
 
 }

@@ -1,6 +1,8 @@
 package com.kite.kmessenger
 
 import com.kite.kmessenger.model.ChatMessage
+import com.kite.kmessenger.service.ChatService
+import com.kite.kmessenger.util.getLogger
 import io.micronaut.context.ApplicationContext
 import io.micronaut.runtime.server.EmbeddedServer
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
@@ -10,19 +12,18 @@ import io.micronaut.websocket.annotation.OnClose
 import io.micronaut.websocket.annotation.OnMessage
 import io.micronaut.websocket.annotation.OnOpen
 import jakarta.inject.Inject
-import org.awaitility.kotlin.atMost
+import org.apache.logging.log4j.core.Logger
+import org.apache.logging.log4j.test.appender.ListAppender
+import org.assertj.core.api.Assertions
 import org.awaitility.kotlin.await
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
 import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
 
 @MicronautTest
-class ChatServiceWebSocketIT {
+class ChatServerWebSocketIT {
     @Inject lateinit var context: ApplicationContext
     @Inject lateinit var server: EmbeddedServer
 
@@ -74,12 +75,12 @@ class ChatServiceWebSocketIT {
 
     private fun waitAndCheck(duration: Duration, check: () -> Boolean) {
         Thread.sleep(duration.toMillis())
-        Assertions.assertTrue(check())
+        Assertions.assertThat(check()).isTrue()
     }
 
     private fun waitAndCheck(duration: Duration, checks: List<() -> Boolean>) {
         Thread.sleep(duration.toMillis())
-        checks.forEach { Assertions.assertTrue(it()) }
+        checks.forEach { Assertions.assertThat(it()).isTrue() }
     }
 
     @Test
@@ -129,5 +130,45 @@ class ChatServiceWebSocketIT {
             { user3.messages.isEmpty() },
             { !user2client2.messages.contains(message3) }
         ))
+    }
+
+    /*private class ListAppender : AbstractAppender {
+
+    }*/
+
+    @Test
+    internal fun shouldCorrectlyCloseMultipleSessions() {
+        // given
+        val logger = getLogger(ChatService::class.java.name, Logger::class.java)!!
+        val listAppender = ListAppender("test")
+        listAppender.start()
+
+        logger.addAppender(listAppender)
+
+        val client2 = createClient("user2")
+        val client3 = createClient("user2")
+
+        // when
+        client2.close()
+
+        // then
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Session of user2 closed, 2 sessions remain") })
+
+        // when
+        val client4 = createClient("user2")
+        val client5 = createClient("user2")
+
+        client5.close()
+        client4.close()
+        client3.close()
+        user2.close()
+
+        // then
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Session of user2 closed, 3 sessions remain") })
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Session of user2 closed, 2 sessions remain") })
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Session of user2 closed, 1 sessions remain") })
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Session of user2 closed, 0 sessions remain") })
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Last session for user2 disconnected, no longer online") })
+        Assertions.assertThat(listAppender.messages.any { it.endsWith("Stream closed for user2: OK") })
     }
 }

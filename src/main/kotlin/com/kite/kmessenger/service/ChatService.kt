@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 @Singleton
 class ChatService {
@@ -15,33 +16,47 @@ class ChatService {
         private val logger: Logger = LoggerFactory.getLogger(ChatService::class.java)
     }
 
-    private val localSessions = ConcurrentHashMap<String, Sinks.Many<ChatMessage>>()
+    private class UserContext {
+        val sessionCount = AtomicInteger()
+        val sink: Sinks.Many<ChatMessage> = Sinks.many().multicast().directBestEffort()
+    }
+
+    private val localSessions = ConcurrentHashMap<String, UserContext>()
 
     fun sendMessage(message: ChatMessage) {
         val flux = localSessions[message.to] ?: throw UserNotFoundException(message.to)
-        val r = flux.tryEmitNext(message)
+        val r = flux.sink.tryEmitNext(message)
         logger.info("Sent {}: {}", message, r)
     }
 
     fun register(user: String): Flux<ChatMessage> {
-        localSessions.putIfAbsent(user, Sinks.many().multicast().directBestEffort())
-        return localSessions[user]!!.asFlux()
+        localSessions.putIfAbsent(user, UserContext())
+        val ctx = localSessions[user]!!
+        synchronized(ctx) {
+            // if other session was the only session, and it just ended, the context got removed from cache
+            // we need to put it back
+            localSessions.putIfAbsent(user, ctx)
+            ctx.sessionCount.incrementAndGet()
+            return ctx.sink.asFlux()
+        }
     }
 
     fun logout(user: String) {
-        val sink = localSessions[user]
+        val context = localSessions[user]
         
-        if (sink != null) {
-            val subscriberCount = sink.currentSubscriberCount()
-            logger.debug("Session of $user closed, ${subscriberCount - 1} sessions remain")
+        if (context != null) {
+            synchronized(context) {
+                val subscriberCount = context.sessionCount.decrementAndGet()
+                logger.debug("Session of $user closed, $subscriberCount sessions remain")
 
-            if (subscriberCount <= 1) {
-                logger.debug("Last session for $user disconnected, no longer online")
+                if (subscriberCount < 1) {
+                    logger.debug("Last session for $user disconnected, no longer online")
 
-                val result = sink.tryEmitComplete()
-                logger.debug("Stream closed for $user: $result")
+                    val result = context.sink.tryEmitComplete()
+                    logger.debug("Stream closed for $user: $result")
 
-                localSessions.remove(user)
+                    localSessions.remove(user)
+                }
             }
         }
     }
