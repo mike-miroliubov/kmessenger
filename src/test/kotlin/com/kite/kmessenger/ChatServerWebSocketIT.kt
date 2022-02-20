@@ -132,10 +132,6 @@ class ChatServerWebSocketIT {
         ))
     }
 
-    /*private class ListAppender : AbstractAppender {
-
-    }*/
-
     @Test
     internal fun shouldCorrectlyCloseMultipleSessions() {
         // given

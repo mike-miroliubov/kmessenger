@@ -2,6 +2,8 @@ package com.kite.kmessenger.service
 
 import com.kite.kmessenger.exception.UserNotFoundException
 import com.kite.kmessenger.model.ChatMessage
+import com.kite.kmessenger.repository.MessageRepository
+import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -11,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 @Singleton
-class ChatService {
+class ChatService(@Inject val messageRepository: MessageRepository) {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(ChatService::class.java)
     }
@@ -26,6 +28,7 @@ class ChatService {
     fun sendMessage(message: ChatMessage) {
         val flux = localSessions[message.to] ?: throw UserNotFoundException(message.to)
         val r = flux.sink.tryEmitNext(message)
+        messageRepository.createMessage(message)
         logger.info("Sent {}: {}", message, r)
     }
 

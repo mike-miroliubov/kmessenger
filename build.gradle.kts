@@ -40,6 +40,7 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-api:2.17.0")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
     implementation("io.micronaut:micronaut-validation")
+    implementation("io.micronaut.cassandra:micronaut-cassandra:4.0.0")
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
     testImplementation("org.awaitility:awaitility-kotlin:4.1.1")

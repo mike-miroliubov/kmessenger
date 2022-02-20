@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  node1:
+    image: "cassandra:3.11.9"
+    container_name: "node1"
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./data/node1:/var/lib/cassandra
+    environment:
+      MAX_HEAP_SIZE: 256M
+      HEAP_NEWSIZE: 128M
+      CASSANDRA_SEEDS: node1,node2
+
+  node2:
+    image: "cassandra:3.11.9"
+    container_name: "node2"
+    ports:
+      - "9043:9042"
+    volumes:
+      - ./data/node2:/var/lib/cassandra
+    environment:
+      MAX_HEAP_SIZE: 256M
+      HEAP_NEWSIZE: 128M
+      CASSANDRA_SEEDS: node1,node2
+    depends_on:
+      - "node1"
+
+  node3:
+    image: "cassandra:3.11.9"
+    container_name: "node3"
+    ports:
+      - "9044:9042"
+    volumes:
+      - ./data/node3:/var/lib/cassandra
+    environment:
+      MAX_HEAP_SIZE: 256M
+      HEAP_NEWSIZE: 128M
+      CASSANDRA_SEEDS: node1,node2
+    depends_on:
+      - "node2"
