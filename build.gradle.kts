@@ -9,7 +9,7 @@ plugins {
 version = "0.1"
 group = "com.kite.kmessenger"
 
-val kotlinVersion=project.properties.get("kotlinVersion")
+val kotlinVersion= project.properties["kotlinVersion"]
 repositories {
     mavenCentral()
 }
@@ -45,6 +45,9 @@ dependencies {
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
     testImplementation("org.awaitility:awaitility-kotlin:4.1.1")
     testImplementation(group = "org.apache.logging.log4j", name = "log4j-core", version = "2.17.0", classifier = "tests")
+    testImplementation("org.testcontainers:testcontainers:1.16.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.16.3")
+
     testImplementation("org.assertj:assertj-core:3.22.0")
 
 
