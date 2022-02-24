@@ -2,13 +2,19 @@ package com.kite.kmessenger.repository
 
 import com.kite.kmessenger.model.ChatMessage
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.*
 
 
 class MessageRepositoryTest : AbstractRepositoryTest() {
+    @AfterEach
+    fun cleanup() {
+        session.execute("TRUNCATE direct_message")
+    }
+
     @Test
-    fun shouldStoreAndRetrieveMessagesByFromAndTo() {
+    fun `should store and retrieve messages by from and to`() {
         val repository = MessageRepository(session)
 
         // given

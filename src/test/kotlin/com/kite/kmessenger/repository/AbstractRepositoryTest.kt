@@ -2,6 +2,7 @@ package com.kite.kmessenger.repository
 
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.CassandraContainer
@@ -15,7 +16,7 @@ import java.net.InetSocketAddress
 abstract class AbstractRepositoryTest {
     companion object {
         @Container
-        val cassandra: CassandraContainer<*> = CassandraContainer<Nothing>("cassandra:3.11.9").apply {
+        val cassandra = CassandraContainer<Nothing>("cassandra:3.11.9").apply {
             withInitScript("db/init/1.cql")
             start()
         }
