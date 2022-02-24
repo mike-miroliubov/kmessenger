@@ -1,50 +1,12 @@
 package com.kite.kmessenger.repository
 
-import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint
 import com.kite.kmessenger.model.ChatMessage
 import org.assertj.core.api.Assertions.assertThat
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.until
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.utility.DockerImageName
-import java.net.InetSocketAddress
 import java.util.*
 
 
-@Testcontainers
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MessageRepositoryTest : AbstractRepositoryTest() {
-    private val session = buildSession()
-
-    private fun buildSession(): CqlSession {
-        val session = CqlSession.builder()
-            .addContactEndPoint(DefaultEndPoint(InetSocketAddress(container.host, container.firstMappedPort)))
-            .withLocalDatacenter("datacenter1")
-            .build()
-
-        session.execute("CREATE KEYSPACE messenger WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
-        session.close()
-
-        return CqlSession.builder()
-            .addContactEndPoint(DefaultEndPoint(InetSocketAddress(container.host, container.firstMappedPort)))
-            .withLocalDatacenter("datacenter1")
-            .withKeyspace("messenger")
-            .build()
-    }
-
-    @BeforeAll
-    fun init() {
-        val schema = MessageRepository::class.java.getResource("/db/migrations/1.cql").readText()
-        session.execute(schema)
-    }
-
     @Test
     fun shouldStoreAndRetrieveMessagesByFromAndTo() {
         val repository = MessageRepository(session)

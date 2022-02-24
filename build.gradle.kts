@@ -32,7 +32,6 @@ dependencies {
     runtimeOnly("io.micronaut.reactor:micronaut-reactor:2.0.0")
     implementation("io.projectreactor:reactor-core:3.4.12")
 
-
     implementation("javax.annotation:javax.annotation-api")
     implementation("org.apache.logging.log4j:log4j-core:2.17.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
@@ -43,14 +42,13 @@ dependencies {
     implementation("io.micronaut.cassandra:micronaut-cassandra:4.0.0")
 
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
+
     testImplementation("org.awaitility:awaitility-kotlin:4.1.1")
     testImplementation(group = "org.apache.logging.log4j", name = "log4j-core", version = "2.17.0", classifier = "tests")
     testImplementation("org.testcontainers:testcontainers:1.16.3")
     testImplementation("org.testcontainers:junit-jupiter:1.16.3")
-
+    testImplementation("org.testcontainers:cassandra:1.16.3")
     testImplementation("org.assertj:assertj-core:3.22.0")
-
-
 }
 
 
