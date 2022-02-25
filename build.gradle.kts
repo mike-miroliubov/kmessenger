@@ -24,6 +24,11 @@ micronaut {
 }
 
 dependencies {
+    // Kotlin
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
+
+    // Micronaut
     kapt("io.micronaut:micronaut-http-validation")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut:micronaut-runtime")
@@ -31,16 +36,19 @@ dependencies {
     implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
     runtimeOnly("io.micronaut.reactor:micronaut-reactor:2.0.0")
     implementation("io.projectreactor:reactor-core:3.4.12")
+    implementation("io.micronaut:micronaut-validation")
 
-    implementation("javax.annotation:javax.annotation-api")
+    // Logging
     implementation("org.apache.logging.log4j:log4j-core:2.17.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     runtimeOnly("org.apache.logging.log4j:log4j-api:2.17.0")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
-    implementation("io.micronaut:micronaut-validation")
-    implementation("io.micronaut.cassandra:micronaut-cassandra:4.0.0")
 
+    // Cassandra
+    implementation("io.micronaut.cassandra:micronaut-cassandra:4.0.0")
+    implementation("org.cognitor.cassandra:cassandra-migration:2.5.0_v4")
+
+    // Misc
+    implementation("javax.annotation:javax.annotation-api")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     testImplementation("org.awaitility:awaitility-kotlin:4.1.1")

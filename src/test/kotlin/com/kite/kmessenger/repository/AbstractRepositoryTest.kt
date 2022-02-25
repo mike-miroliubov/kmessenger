@@ -2,6 +2,11 @@ package com.kite.kmessenger.repository
 
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint
+import org.cognitor.cassandra.migration.Database
+import org.cognitor.cassandra.migration.MigrationConfiguration
+import org.cognitor.cassandra.migration.MigrationRepository
+import org.cognitor.cassandra.migration.MigrationTask
+import org.cognitor.cassandra.migration.keyspace.Keyspace
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -30,7 +35,13 @@ abstract class AbstractRepositoryTest {
 
     @BeforeAll
     fun init() {
-        val schema = MessageRepository::class.java.getResource("/db/migrations/1.cql").readText()
-        session.execute(schema)
+        val session = CqlSession.builder()
+            .addContactEndPoint(DefaultEndPoint(InetSocketAddress(cassandra.host, cassandra.firstMappedPort)))
+            .withLocalDatacenter("datacenter1")
+            .build()
+
+        val db = Database(session, MigrationConfiguration().withKeyspace(Keyspace("messenger")))
+        val migration = MigrationTask(db, MigrationRepository("/db/migrations"))
+        migration.migrate()
     }
 }
