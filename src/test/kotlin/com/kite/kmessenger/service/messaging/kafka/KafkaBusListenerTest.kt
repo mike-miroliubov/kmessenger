@@ -17,7 +17,9 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import reactor.core.publisher.Flux
+import reactor.core.scheduler.Schedulers
 import java.time.Duration
+import kotlin.concurrent.thread
 
 
 @MicronautTest
@@ -38,17 +40,19 @@ internal class KafkaBusListenerTest : TestPropertyProvider {
 
 
     @Test
-    fun `should receive message`() {
+    fun `should send and receive 10 messages`() {
         // given
         val msg = ChatMessage("hello", "user1", "user2")
+        val incoming = mutableListOf<ChatMessage>()
 
         // when
-        Flux.concat((0 until 10).map { kafkaBusClient.sendMessage(msg.to, msg) }).collectList().block()
+        thread {
+            (0 until 10).map { kafkaBusClient.sendMessage(msg.to, msg) }
+        }
 
-        // then
-        val incoming = mutableListOf<ChatMessage>()
         kafkaBusListener.incomingMessages.subscribe { incoming += it }
 
+        // then
         await atMost Duration.ofSeconds(10) until {
             incoming.size == 10
         }
