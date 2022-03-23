@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 
-@KafkaListener
+@KafkaListener(uniqueGroupId = true)
 class KafkaBusListener : BusListener {
     companion object {
         private val LOGGER = LoggerFactory.getLogger(KafkaBusListener::class.java)
