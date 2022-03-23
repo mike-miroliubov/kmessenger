@@ -1,8 +1,9 @@
 package com.kite.kmessenger.service
 
-import com.kite.kmessenger.exception.UserNotFoundException
 import com.kite.kmessenger.model.ChatMessage
 import com.kite.kmessenger.repository.MessageRepository
+import com.kite.kmessenger.service.messaging.BusClient
+import com.kite.kmessenger.service.messaging.BusListener
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import org.slf4j.Logger
@@ -13,7 +14,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 @Singleton
-class ChatService(@Inject val messageRepository: MessageRepository) {
+class ChatService(
+    @Inject private val messageRepository: MessageRepository,
+    @Inject private val busClient: BusClient,
+    @Inject private val busListener: BusListener
+) {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(ChatService::class.java)
     }
@@ -25,11 +30,27 @@ class ChatService(@Inject val messageRepository: MessageRepository) {
 
     private val localSessions = ConcurrentHashMap<String, UserContext>()
 
+    init {
+        busListener.incomingMessages.subscribe(this::forwardMessage)
+    }
+
     fun sendMessage(message: ChatMessage) {
-        val flux = localSessions[message.to] ?: throw UserNotFoundException(message.to)
-        val r = flux.sink.tryEmitNext(message)
+        val flux = localSessions[message.to]
+
+        if (flux == null) {
+            busClient.sendMessage(message.to, message) // TODO replace default with topic lookup
+        } else {
+            val r = flux.sink.tryEmitNext(message)
+            logger.info("Forwarded {}: {}", message, r)
+        }
+
         messageRepository.createMessage(message)
-        logger.info("Sent {}: {}", message, r)
+    }
+
+    private fun forwardMessage(message: ChatMessage) {
+        val flux = localSessions[message.to] ?: return
+        val r = flux.sink.tryEmitNext(message)
+        logger.info("Forwarded {}: {}", message, r)
     }
 
     fun register(user: String): Flux<ChatMessage> {
@@ -46,7 +67,7 @@ class ChatService(@Inject val messageRepository: MessageRepository) {
 
     fun logout(user: String) {
         val context = localSessions[user]
-        
+
         if (context != null) {
             synchronized(context) {
                 val subscriberCount = context.sessionCount.decrementAndGet()

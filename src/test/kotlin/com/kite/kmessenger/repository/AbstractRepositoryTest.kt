@@ -7,7 +7,6 @@ import org.cognitor.cassandra.migration.MigrationConfiguration
 import org.cognitor.cassandra.migration.MigrationRepository
 import org.cognitor.cassandra.migration.MigrationTask
 import org.cognitor.cassandra.migration.keyspace.Keyspace
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.CassandraContainer

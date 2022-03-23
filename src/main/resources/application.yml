@@ -4,15 +4,27 @@ micronaut:
 logger:
   levels:
     com.kite.kmessanger: ERROR
+
 cassandra:
   default:
     advanced:
       metadata:
         schema:
           enabled: false
+      # Use only for local deployment with Docker Compose
+      address-translator:
+        class: com.kite.kmessenger.util.PrivateGatewayAddressTranslator
     basic:
       contact-points:
-        - "localhost:9042"
+        - "127.0.0.1:9042"
+        # - "127.0.0.1:9043"
       load-balancing-policy:
         local-datacenter: datacenter1
       session-keyspace: messenger
+
+kafka:
+  bootstrap:
+    servers: localhost:9092
+
+messenger:
+  topic: "default"

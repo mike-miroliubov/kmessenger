@@ -9,7 +9,9 @@
         <Logger name="com.kite.kmessenger" level="debug" additivity="false">
             <AppenderRef ref="LogToConsole"/>
         </Logger>
-
+        <Logger name="org.testcontainers" level="debug">
+            <AppenderRef ref="LogToConsole" />
+        </Logger>
         <Root level="info">
             <AppenderRef ref="LogToConsole"/>
         </Root>
